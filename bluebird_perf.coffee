@@ -4,24 +4,30 @@ require('coffee-script/register')
 Promise = require('bluebird')
 Benchmarker = require('./lib/benchmarker')
 
-NUM_RUNS = 25
+NUM_RUNS = 50
+RUN_PARALLEL = false
 
 async01 = (callback) ->
-	x = 0
-	for i in [0...10000000]
-		x = x + 2 / 5 * 3
-	callback(null, x)
+	# do work in separate stack
+	setImmediate () ->
+		x = 0
+		for i in [0...10000000]
+			x = x + 2 / 5 * 3
+		callback(null, x)
+
 async01_p = Promise.promisify(async01)
 
 async02 = (callback) ->
-	x = 0
-	for i in [0...10000000]
-		x = x + 2 / 5 * 3
-	callback(null, x)
+	# do work in separate stack
+	setImmediate () ->
+		x = 0
+		for i in [0...10000000]
+			x = x + 2 / 5 * 3
+		callback(null, x)
+
 async02_p = Promise.promisify(async02)
 
 runBluebirdTest = (callback) ->
-
 	console.log ""
 	console.log "Bluebird Test"
 
@@ -36,13 +42,12 @@ runBluebirdTest = (callback) ->
 			console.log "error: #{ err }"
 			done()
 
-	b = new Benchmarker(testFn, NUM_RUNS)
+	b = new Benchmarker(testFn, NUM_RUNS, RUN_PARALLEL)
 	b.runFullTest (results) ->
 		b.printSummary()
 		callback()
 
 runBluebirdLazyPromisifyTest = (callback) ->
-
 	console.log ""
 	console.log "Bluebird Lazy Promisify Test"
 
@@ -57,13 +62,12 @@ runBluebirdLazyPromisifyTest = (callback) ->
 			console.log "error: #{ err }"
 			done()
 
-	b = new Benchmarker(testFn, NUM_RUNS)
+	b = new Benchmarker(testFn, NUM_RUNS, RUN_PARALLEL)
 	b.runFullTest (results) ->
 		b.printSummary()
 		callback()
 
 runVanillaTest = (callback) ->
-
 	console.log ""
 	console.log "Vanilla Test"
 
@@ -74,13 +78,24 @@ runVanillaTest = (callback) ->
 				# console.log "async02 x: #{ x }"
 				done()
 
-	b = new Benchmarker(testFn, NUM_RUNS)
+	b = new Benchmarker(testFn, NUM_RUNS, RUN_PARALLEL)
 	b.runFullTest (results) ->
 		b.printSummary()
 		callback()
 
+tests = [
+	runBluebirdTest,
+	runBluebirdLazyPromisifyTest,
+	runVanillaTest
+]
 
-runBluebirdLazyPromisifyTest () ->
-	runBluebirdTest () ->
-		runVanillaTest () ->
-			console.log "Done"
+main = () ->
+	testNum = parseInt(process.argv[2], 10)
+	testNum ?= 0
+	test = tests[testNum]
+
+	test () ->
+		console.log "Done"
+		process.exit(0)
+
+main()

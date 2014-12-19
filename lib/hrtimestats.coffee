@@ -21,4 +21,36 @@ class HRTimeStats
 		console.log "60: #{ @stats.percentile(60).toFixed(3) }ms"
 		console.log "80: #{ @stats.percentile(80).toFixed(3) }ms"
 
+		@printBoxPlot()
+
+	printBoxPlot: () ->
+		[min, max] = @stats.range()
+		median = @stats.median().toFixed(3)
+		lowerQuart = @stats.percentile(25).toFixed(3)
+		upperQuart = @stats.percentile(75).toFixed(3)
+
+		console.log "#{ min }"
+		console.log "#{ lowerQuart }"
+		console.log "#{ median }"
+		console.log "#{ upperQuart }"
+		console.log "#{ max }"
+
 module.exports = HRTimeStats
+
+# plot = [
+# 	' ┬ ',
+# 	' │ ',
+# 	' │ ',
+# 	' │ ',
+# 	' │ ',
+# 	'┌┴┐',
+# 	'│ │',
+# 	'├─┤',
+# 	'└┬┘',
+# 	' │ ',
+# 	' │ ',
+# 	' │ ',
+# 	' ┴ ',
+# ]
+
+# console.log plot.join('\n')

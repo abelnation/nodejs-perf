@@ -2,12 +2,18 @@
 HRTimeStats = require('./hrtimestats')
 
 class Benchmarker
-	constructor: (@fn, @ntimes=50) ->
+	constructor: (@fn, @ntimes=50, @runParallel=false) ->
 		@runs = []
 		@stats = null
 
 	runFullTest: (done) ->
+		if @runParallel
+			@runParallelTest(done)
+		else
+			@runSerialTest(done)
 
+	runSerialTest: (done) ->
+		console.log 'running in serial'
 		@runs = []
 		numCompleted = 0
 
@@ -15,12 +21,34 @@ class Benchmarker
 			# console.log "t: #{ runTime }"
 			@runs.push(runTime)
 			numCompleted++
+
+			if numCompleted == @ntimes
+				@calculateStats()
+				done(@runs)
+
+			# start next run in a new stack
+			setImmediate () =>
+				@doSingleRun(onRunCompleted)
+
+		# start test
+		@doSingleRun(onRunCompleted)
+
+	runParallelTest: (done) ->
+		console.log 'running in parallel'
+		@runs = []
+		numCompleted = 0
+
+		onRunCompleted = (runTime) =>
+			@runs.push(runTime)
+			numCompleted++
+
 			if numCompleted == @ntimes
 				@calculateStats()
 				done(@runs)
 
 		for i in [0...@ntimes]
-			@doSingleRun(onRunCompleted)
+			setImmediate () =>
+				@doSingleRun(onRunCompleted)
 
 	doSingleRun: (callback) ->
 		# get time with nanosecond resolution
