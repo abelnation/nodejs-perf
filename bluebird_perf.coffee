@@ -1,4 +1,6 @@
 
+require('coffee-script/register')
+
 Promise = require('bluebird')
 Benchmarker = require('./lib/benchmarker')
 
